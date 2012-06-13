@@ -87,6 +87,7 @@ module Koala
         #
         # @return an array of parameters that can be provided via graph_call(*parsed_params)
         def self.parse_page_url(url)
+          url.gsub!(/\|/, '%7C')
           uri = URI.parse(url)
 
           base = uri.path.sub(/^\//, '')

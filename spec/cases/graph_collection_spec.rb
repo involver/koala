@@ -102,6 +102,12 @@ describe Koala::Facebook::GraphCollection do
       it "works with non-.com addresses" do
         base = "url_path"
         args_hash = {"one" => "val_one", "two" => "val_two"}
+        Koala::Facebook::GraphCollection.parse_page_url("http://facebook.net/#{base}?#{args_hash.map {|k,v| "#{k}=#{v}" }.join("&")}").should == [base, args_hash]
+      end
+
+      it "works with facebook application access tokens" do
+        base = "url_path"
+        args_hash = {"access_token" => "123|abc"}
         Koala::Facebook::GraphCollection.parse_page_url("http://facebook.com/#{base}?#{args_hash.map {|k,v| "#{k}=#{v}" }.join("&")}").should == [base, args_hash]
       end
     end
