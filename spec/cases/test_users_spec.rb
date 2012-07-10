@@ -1,24 +1,17 @@
 require 'spec_helper'
 
 describe "Koala::Facebook::TestUsers" do
-  before :all do
+  before :each do
     # get oauth data
     @app_id = KoalaTest.app_id
     @secret = KoalaTest.secret
     @app_access_token = KoalaTest.app_access_token
 
-    @test_users = Koala::Facebook::TestUsers.new({:app_access_token => @app_access_token, :app_id => @app_id})
+    @test_users = Koala::Facebook::TestUsers.new(:app_access_token => @app_access_token, :app_id => @app_id)
 
     # check OAuth data
     unless @app_id && @secret && @app_access_token
       raise Exception, "Must supply OAuth app id, secret, app_access_token, and callback to run live subscription tests!"
-    end
-  end
-  
-  after :each do
-    # clean up any test users
-    ((@network || []) + [@user1, @user2]).each do |u|
-      puts "Unable to delete test user #{u.inspect}" if u && !(@test_users.delete(u) rescue false)
     end
   end
 
@@ -173,7 +166,7 @@ describe "Koala::Facebook::TestUsers" do
       it "lets you specify http options that get passed through to the graph call" do
         options = {:some_http_option => true}
         # technically this goes through delete_object, but this makes it less brittle
-        @test_users.graph_api.should_receive(:graph_call).with(anything, anything, anything, options)
+        @test_users.api.should_receive(:graph_call).with(anything, anything, anything, options)
         @test_users.delete("user", options)
       end        
     end
