@@ -507,7 +507,8 @@ describe "Koala::Facebook::GraphAPI in batch mode" do
       pictures = @api.batch do |batch_api|
         batch_api.get_picture('me')
       end
-      pictures.first.should_not be_empty
+      puts pictures.inspect
+      pictures.first.should =~ /http\:\/\// # works both live & stubbed
     end
 
     it "handles requests for two different tokens" do
@@ -546,6 +547,42 @@ describe "Koala::Facebook::GraphAPI in batch mode" do
       fql_result = result[0]
       fql_result[0].should be_a(Hash)
       fql_result[0]["first_name"].should == "Alex"
+    end
+
+    describe 'with post-processing callback' do
+      let(:me_result) { stub("me result") }
+      let(:friends_result) { stub("friends result") }
+
+      let(:me_callback) { lambda {|data| me_result } }
+      let(:friends_callback) { lambda {|data| friends_result } }
+
+      it 'calls the callback with the appropriate data' do
+        me_callback.should_receive(:call).with(hash_including(
+          'id' => KoalaTest.user1
+        ))
+        friends_callback.should_receive(:call).with([
+          hash_including('id' => KoalaTest.user2)
+        ])
+        @api.batch do |batch_api|
+          batch_api.get_object('me', &me_callback)
+          batch_api.get_connections('me', 'friends', &friends_callback)
+        end
+      end
+
+      it 'passes GraphCollections, not raw data' do
+        friends_callback.should_receive(:call).with(kind_of(Koala::Facebook::API::GraphCollection))
+        @api.batch do |batch_api|
+          batch_api.get_object('me')
+          batch_api.get_connections('me', 'friends', &friends_callback)
+        end
+      end
+
+      it "returns the result of the callback" do
+        @api.batch do |batch_api|
+          batch_api.get_object('me', &me_callback)
+          batch_api.get_connections('me', 'friends', &friends_callback)
+        end.should == [me_result, friends_result]
+      end
     end
 
     describe "binary files" do
